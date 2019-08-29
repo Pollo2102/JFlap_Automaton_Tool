@@ -19,8 +19,8 @@ class Automaton {
 	
 	int minimizationTable[][];
 	
-	final static int X_POSITION = 155;
-	final static int Y_POSITION = 120;
+	final static String X_POSITION = "155";
+	final static String Y_POSITION = "120";
 	
 	private Element document;
     private Element Automaton;
@@ -233,12 +233,87 @@ class Automaton {
      * Finally, generate the new automaton.
      */
     void step4() {
-    	List<String> newAutomatonTransitions = combineStates(getNewStates());
+    	List<String> newAutomatonStates = combineStates(getNewStates());
+    	String newAutomatonTransitions[] = getNewTransitions(newAutomatonStates);
+    	
+    	this.newStates = generateNewStates(newAutomatonStates);
+    	this.newTransitions = generateNewTransitions(newAutomatonTransitions);
     	
     	// Generate transitions
     	// Write the file
     	
 		
+    }
+    
+    List<Element> generateNewStates(List<String> newStates) {
+    	List<Element> states = new ArrayList<>();
+    	Integer i = 0;
+    	
+    	for (String string : newStates) {
+    		Element tempElement = new Element("state");
+    		tempElement.setAttribute("id", i.toString());
+    		tempElement.setAttribute("name", newStates.get(i));
+        	Element tempX = new Element("x");
+        	tempX.setText(X_POSITION);
+        	Element tempY = new Element("y");
+        	tempX.setText(Y_POSITION);
+        	tempElement.addContent(tempX);
+        	tempElement.addContent(tempY);
+        	
+        	if(stateIsInitial(string)) {
+        		Element initialElement = new Element("initial");
+        		tempElement.addContent(initialElement);
+        	}else if (stateIsFinal(string)) {
+        		Element initialElement = new Element("final");
+        		tempElement.addContent(initialElement);
+        	}
+        	
+			i++;
+		}
+    	
+    	
+    	return states;
+    }
+    
+    boolean stateIsInitial(String State) {
+    	for (Element states : this.States) {
+			if(states.getChild("initial") == null && (State.contains(states.getAttributeValue("id"))))
+				return true;
+		}
+    	
+    	return false;
+    }
+    
+    boolean stateIsFinal(String State) {
+    	for (Element states : this.States) {
+			if(states.getChild("final") == null && (State.contains(states.getAttributeValue("id"))))
+				return true;
+		}
+    	
+    	return false;
+    }
+    
+    List<Element> generateNewTransitions(String[] newTransitions) {
+    	List<Element> genTransitions = new ArrayList<>();
+    	
+    	
+    	return genTransitions;
+    }
+    
+    String[] getNewTransitions(List<String> newStates) {
+    	String[] newTransitions = new String[newStates.size()];
+    	
+    	int i = 0;
+    	for (String string : newStates) {
+    		for (Element transition : this.Transitions) {
+				if(string.contains(transition.getChildText("from"))) {
+					newTransitions[i] += transition.getChildText("to");
+				}
+			}
+    		i++;
+		}    	
+    	
+    	return newTransitions;
     }
     
     List<String> combineStates(List<String> states) {
