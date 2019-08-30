@@ -7,10 +7,10 @@ class ParserTest {
     public static void main(String[] args) {
     	
     	XMLParser xmlP = new XMLParser();
+    	Automaton auto = new Automaton();
     	
     	try {
-    		xmlP.loadFile("/home/diego/Documents/Universidad/Teoría de la Computación/Project1/example1.jff");
-    		
+    		auto.minimizeAutomaton("/home/diego/Downloads/DFA_0.1.jff");    		
     	}
     	catch(Exception e) {
     		e.printStackTrace();

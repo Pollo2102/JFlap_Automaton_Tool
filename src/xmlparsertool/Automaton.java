@@ -2,6 +2,7 @@ package xmlparsertool;
 
 import java.io.FileWriter;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
@@ -13,7 +14,7 @@ import org.jdom2.JDOMException;
 import org.jdom2.output.Format;
 import org.jdom2.output.XMLOutputter;
 
-class Automaton {
+public class Automaton {
 	
 	XMLParser XMLP;
 	
@@ -35,6 +36,11 @@ class Automaton {
 	
 	public Automaton() {
 		XMLP = new XMLParser();
+		States = new ArrayList<>();
+		Transitions = new ArrayList<>();
+		Inputs = new ArrayList<>();
+		newStates = new ArrayList<>();
+		newTransitions = new ArrayList<>();
 	}
 	
 	// Create an object with the automaton states and transitions
@@ -55,7 +61,9 @@ class Automaton {
 		XMLOutputter xmlOutput = new XMLOutputter();
 		
         xmlOutput.setFormat(Format.getPrettyFormat());
-        xmlOutput.output(document, new FileWriter(fileName));
+        xmlOutput.output(document, new FileWriter("/home/diego/Documents/Universidad/Teoría"
+        		+ " de la Computación/Project1/" + "newAutomaton.jff"));
+        //xmlOutput.output(document, System.out);
         System.out.println("File successfully written.");
 	}
 	
@@ -75,16 +83,29 @@ class Automaton {
     
     public void eraseStates(List<Integer> stateIDs) {
     	int stateValue;
-    	for (Element state : this.States) {
+    	
+    	for (int i = 0; i < this.States.size(); i++) {
+    		stateValue = Integer.parseInt(this.States.get(i).getAttribute("id").getValue());
+    		if (stateIDs.contains(stateValue)) {
+    			for (int j = 0; j < this.Transitions.size(); j++) {
+    				if (Integer.parseInt(this.Transitions.get(j).getChildText("from")) == stateValue && !isInitialState(this.States.get(i)))
+        				this.Transitions.get(j).detach();
+				}
+    			this.States.get(i).detach();
+    		}
+		}
+    	
+    	/*for (Element state : this.States) {
     		stateValue = Integer.parseInt(state.getAttribute("id").getValue());
     		if (stateIDs.contains(stateValue)) {
-    			state.detach();
     			for (Element element : this.Transitions) {
         			if (Integer.parseInt(element.getChildText("from")) == stateValue && !isInitialState(state))
         				element.detach();
         		}
+    			state.detach();
+    			continue;
     		}
-		}
+		}*/
     }
     
     List<Integer> getUnreachableStates() {
@@ -93,21 +114,34 @@ class Automaton {
     	List<Integer> unreachableStates = new ArrayList<>();
     	
     	for (Element element : States) {
-			statesList.add(Integer.parseInt(element.getAttribute("id").toString()));
+			statesList.add(Integer.parseInt(element.getAttributeValue("id").toString()));
 		}
     	
     	for (Element element : Transitions) {
-    		transitionsList.add(Integer.parseInt(element.getChildText("to")));
+    		if(Integer.parseInt(element.getChildText("to")) != Integer.parseInt(element.getChildText("from"))) {
+        		transitionsList.add(Integer.parseInt(element.getChildText("to")));
+    		}
     	}
     	
     	for (Integer integer1 : statesList) {
 			for (Integer integer2 : transitionsList) {
-				if (!transitionsList.contains(integer1)) {
-					unreachableStates.add(integer2);
+				if (!transitionsList.contains(integer1) && !isInitial(integer1)) {
+					unreachableStates.add(integer1);
 				}
 			}
 		}
     	return unreachableStates;
+    }
+    
+    boolean isInitial(Integer id) {
+    	for (Element element : this.States) {
+			if (Integer.parseInt(element.getAttributeValue("id")) == id) {
+				if(element.getChild("initial") != null) {
+					return true;
+				}
+			}
+		}
+    	return false;
     }
     
     void eraseUnreachableStates() {
@@ -129,15 +163,15 @@ class Automaton {
      * Main function. Calling this function runs all methods necessary
      * to minimize the automaton.
      */
-    void minimizeAutomaton (String Filename) throws JDOMException, IOException {
+    public void minimizeAutomaton (String Filename) throws JDOMException, IOException {
     	//throw new UnsupportedOperationException("Method not yet implemented.");
     	loadAutomaton(Filename);
     	getAutomatonInputs();
     	eraseUnreachableStates();
-    	step1();
-    	step2();
-    	step3();
-    	step4();
+    	//step1();
+    	//step2();
+    	//step3();
+    	//step4();
     	writeFile();
     }
 	
@@ -201,7 +235,7 @@ class Automaton {
 		if(repeat) step3();
     }
     
-    int findToState(int fromState, String input) {
+    Integer findToState(int fromState, String input) {
     	for (Element transition : Transitions) {
     		int fromSt = Integer.parseInt(transition.getChildText("from"));
     		String inputString = transition.getChildText("read");
@@ -210,6 +244,12 @@ class Automaton {
 			}
 		}
     	return -1;
+    }
+    
+    Integer findNewToState(int toState) {
+    	throw new UnsupportedOperationException("Function not yet implemented");
+    	
+    	//return -1;
     }
     
     boolean transitionIsMarked(int line, int column) {
@@ -295,6 +335,17 @@ class Automaton {
     
     List<Element> generateNewTransitions(String[] newTransitions) {
     	List<Element> genTransitions = new ArrayList<>();
+    	// Unfinished
+    	for(int i = 0; i < newStates.size();i++) {
+    		for(int j = 0; i < newTransitions.length; j++) {
+    			for (String state : Inputs) {
+    				Element tempElement = new Element("transition");
+        			Element fromState = new Element("from");
+        			fromState.setText(newStates.get(i).getAttributeValue("id"));
+        			Element toState = new Element("to");
+				}
+    		}
+    	}
     	
     	
     	return genTransitions;
@@ -317,8 +368,8 @@ class Automaton {
     }
     
     List<String> combineStates(List<String> states) {
-    	int changes = 0;
     	while (true) {
+        	int changes = 0;
     		for (String string : states) {
     			for (char stringChar : string.toCharArray()) {
     				for (String string2 : states) {
